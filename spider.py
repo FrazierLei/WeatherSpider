@@ -30,7 +30,7 @@ class WeatherSpider:
         self.main_url = "http://www.weather.com.cn/forecast/world.shtml"
         self.detail_url = "http://www.weather.com.cn/weather/{}.shtml"
         self.sess = None
-        self.concurrency_num = 10
+        self.concurrency_num = 50
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
             'Referer': 'http://www.weather.com.cn/',
@@ -157,7 +157,7 @@ class WeatherSpider:
         data = self.parse_page(text, city_id)
         await self.save_data(data)
 
-    async def main(self):
+    async def update_weather(self):
         self.sess = aiohttp.ClientSession()
         scrape_detail_tasks = [
             asyncio.ensure_future(self.scrape_weather(city['city_id'])) for city in mongo_client.weather.city.find({})
@@ -170,4 +170,4 @@ if __name__ == '__main__':
     spider = WeatherSpider()
     spider.update_country()
     spider.update_city()
-    asyncio.get_event_loop().run_until_complete(spider.main())
+    asyncio.get_event_loop().run_until_complete(spider.update_weather())
