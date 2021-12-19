@@ -130,8 +130,9 @@ class WeatherSpider:
             result[f'weather_{i + 1}'] = {
                 'date': date,
                 'weather': weather,
-                'temperature': temperature
+                'temperature': temperature.strip()
             }
+        result['last_crawl_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return result
 
     async def scrape_api(self, url):
