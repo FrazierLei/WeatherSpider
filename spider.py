@@ -1,5 +1,4 @@
 import json
-from json import JSONDecodeError
 from tqdm import tqdm
 import logging
 from bs4 import BeautifulSoup
@@ -8,7 +7,6 @@ from datetime import datetime
 import requests
 import asyncio
 import aiohttp
-from aiohttp import ContentTypeError
 
 import pymongo
 from pymongo import MongoClient
@@ -87,7 +85,7 @@ class WeatherSpider:
                 # 多米尼克这个国家的网页有点问题，少个引号，但是这个 bug 随时可能被修复
                 try:
                     data = json.loads(resp.text.split('=', 1)[1])
-                except JSONDecodeError:
+                except json.JSONDecodeError:
                     data = json.loads(resp.text.replace('name', '"name', 1).split('=', 1)[1])
                 city = {
                     'country_id': country_id,
@@ -135,14 +133,14 @@ class WeatherSpider:
         result['last_crawl_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         return result
 
-    async def scrape_api(self, url):
+    async def fetch(self, url):
         async with self.semaphore:
             try:
                 logging.info('scraping %s', url)
                 async with self.sess.get(url) as resp:
                     await asyncio.sleep(1)
                     return await resp.text()
-            except ContentTypeError:
+            except aiohttp.ContentTypeError:
                 logging.error('error occurred while scraping %s', url, exc_info=True)
 
     @staticmethod
@@ -153,7 +151,7 @@ class WeatherSpider:
 
     async def scrape_weather(self, city_id):
         url = self.detail_url.format(city_id)
-        text = await self.scrape_api(url)
+        text = await self.fetch(url)
         data = self.parse_page(text, city_id)
         await self.save_data(data)
 
