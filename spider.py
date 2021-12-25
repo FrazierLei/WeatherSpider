@@ -1,9 +1,3 @@
-import json
-from tqdm import tqdm
-import logging
-from bs4 import BeautifulSoup
-from datetime import datetime
-
 import requests
 import asyncio
 import aiohttp
@@ -11,6 +5,12 @@ import aiohttp
 import pymongo
 from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
+
+import json
+from tqdm import tqdm
+from bs4 import BeautifulSoup
+from datetime import datetime
+import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s: %(message)s')
 
@@ -28,9 +28,9 @@ class WeatherSpider:
         self.main_url = "http://www.weather.com.cn/forecast/world.shtml"
         self.detail_url = "http://www.weather.com.cn/weather/{}.shtml"
         self.sess = None
-        self.concurrency_num = 50
+        self.concurrency_num = 10
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
+            'User-Agent': '996ICU',
             'Referer': 'http://www.weather.com.cn/',
         }
         self.continent_names = [
@@ -156,11 +156,12 @@ class WeatherSpider:
         await self.save_data(data)
 
     async def update_weather(self):
-        self.sess = aiohttp.ClientSession()
-        scrape_detail_tasks = [
-            asyncio.ensure_future(self.scrape_weather(city['city_id'])) for city in mongo_client.weather.city.find({})
+        self.sess = aiohttp.ClientSession()  # 这个 session 必须定义在 async 函数中
+        tasks = [
+            asyncio.create_task(self.scrape_weather(city['city_id'])) for city in mongo_client.weather.city.find({})
         ]
-        await asyncio.wait(scrape_detail_tasks)
+        await asyncio.wait(tasks)
+        # await asyncio.gather(*tasks)
         await self.sess.close()
 
 
@@ -168,4 +169,5 @@ if __name__ == '__main__':
     spider = WeatherSpider()
     spider.update_country()
     spider.update_city()
-    asyncio.get_event_loop().run_until_complete(spider.update_weather())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(spider.update_weather())

@@ -1,9 +1,25 @@
 # WeatherSpider
-爬取全球6000个城市的最近7天天气预报。
+爬取全球6000个城市的最近7天天气预报，使用的数据库为 `MongoDB`。
 
-最近实在疲于奔命，详细文档之后补。
+分成三个步骤：
 
-数据库为 `MongoDB`，数据结构如下：
+1. 在主页抓取国家列表，拿到每个国家对应的 `country_id`，保存到 Mongo 中，共 207 个国家，数据结构为：
+
+   ```json
+   {
+       "_id" : ObjectId("61bf46a7de5733cb2a0e509c"),
+       "country_id" : 163,
+       "continent_id" : 0,
+       "continent_name_en" : "Asia",
+       "continent_name_zh" : "亚洲",
+       "country_name_en" : "Afghanistan",
+       "country_name_zh" : "阿富汗",
+       "last_crawl_time" : "2021-12-19 23:47:11"
+   }
+   ```
+
+2. 对于每一个国家抓取其城市列表，拿到每个城市对应的 `city_id`，保存到Mongo 中。共5970个城市。
+3. 对于每一个城市，抓取其天气页的信息，保存到 Mongo 中，数据结构如下：
 
 ```json
 {
@@ -56,4 +72,8 @@
     }
 }
 ```
+
+因为使用异步爬虫，所以只需要6分钟就能跑完了。
+
+![](./running.png)
 
